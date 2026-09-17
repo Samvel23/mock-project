@@ -82,6 +82,15 @@ export async function fetcher<T = unknown>(
   // DELETE endpoints may legitimately return 204 with no JSON body.
   if (res.status === 204) return undefined as T;
 
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    throw new ApiError(
+      res.status,
+      res.statusText,
+      "The API returned HTML instead of JSON. Check the API proxy and ngrok URL.",
+    );
+  }
+
   const json = (await res.json()) as ApiEnvelope<T>;
   return json.data;
 }
