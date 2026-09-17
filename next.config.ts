@@ -1,12 +1,21 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Forward browser requests from this app to the local API server. This
-  // avoids CORS failures when the Next.js dev server uses another port.
   async rewrites() {
-    const apiUrl = (
-      process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api"
-    ).replace(/\/$/, "");
+    // Получаем значение переменной и удаляем случайные пробелы
+    const rawUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+
+    // Если переменная пустая — ставим дефолтный адрес ngrok или localhost
+    let apiUrl =
+      rawUrl && rawUrl.length > 0 ? rawUrl : "http://localhost:4000/api";
+
+    // Гарантируем наличие валидного протокола
+    if (!apiUrl.startsWith("http://") && !apiUrl.startsWith("https://")) {
+      apiUrl = `https://${apiUrl}`;
+    }
+
+    // Удаляем слэш в конце
+    apiUrl = apiUrl.replace(/\/$/, "");
 
     return [
       {
