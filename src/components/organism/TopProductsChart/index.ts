@@ -1,0 +1,1 @@
+export { TopProductsChart } from "./TopProductsChart";

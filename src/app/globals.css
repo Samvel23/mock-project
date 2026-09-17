@@ -20,7 +20,125 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: #020617;
+  color: #f8fafc;
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* The app uses explicit slate utility classes for its dark dashboard. These
+   overrides give the same surfaces a readable light appearance when the
+   ThemeToggle sets data-theme="light" on the document root. */
+html[data-theme="light"] body {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+html[data-theme="light"] .bg-slate-950 {
+  background-color: #f8fafc;
+}
+
+html[data-theme="light"] .bg-slate-900 {
+  background-color: #ffffff;
+}
+
+html[data-theme="light"] .bg-slate-800 {
+  background-color: #f1f5f9;
+}
+
+html[data-theme="light"] .border-slate-700,
+html[data-theme="light"] .border-slate-600 {
+  border-color: #cbd5e1;
+}
+
+html[data-theme="light"] .text-white,
+html[data-theme="light"] .text-slate-100,
+html[data-theme="light"] .text-slate-200,
+html[data-theme="light"] .text-slate-300 {
+  color: #0f172a;
+}
+
+html[data-theme="light"] .text-slate-400 {
+  color: #475569;
+}
+
+html[data-theme="light"] .hover\:bg-slate-800:hover {
+  background-color: #e2e8f0;
+}
+
+html[data-theme="light"] .hover\:text-slate-100:hover,
+html[data-theme="light"] .hover\:text-white:hover {
+  color: #0f172a;
+}
+
+html[data-theme="light"] .bg-sky-600 {
+  background-color: #0284c7;
+}
+
+html[data-theme="light"] .hover\:bg-sky-500:hover {
+  background-color: #0ea5e9;
+}
+
+html[data-theme="light"] .text-sky-400 {
+  color: #0284c7;
+}
+
+html[data-theme="light"] .bg-gray-800 {
+  background-color: #ffffff;
+}
+
+html[data-theme="light"] .bg-gray-700 {
+  background-color: #f1f5f9;
+}
+
+html[data-theme="light"] .border-gray-600 {
+  border-color: #cbd5e1;
+}
+
+html[data-theme="light"] .text-gray-400 {
+  color: #475569;
+}
+
+html[data-theme="light"] .dashboard-table {
+  background-color: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+html[data-theme="light"] .dashboard-table-head {
+  background-color: #f8fafc;
+}
+
+html[data-theme="light"] .dashboard-table-row {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+}
+
+html[data-theme="light"] .dashboard-table-row:hover {
+  background-color: #f1f5f9;
+}
+
+html[data-theme="light"] .dashboard-table-badge {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+html[data-theme="light"] .dashboard-table button.bg-slate-800 {
+  background-color: #f8fafc;
+  color: #334155;
+}
+
+html[data-theme="light"] .dashboard-table button.hover\:bg-blue-500\/10:hover {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+html[data-theme="light"] .dashboard-table button.hover\:bg-red-500\/10:hover {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+html[data-theme="light"] .shadow\-\[0_20px_60px_rgba\(15\,23\,42\,0\.35\)\],
+html[data-theme="light"] .shadow\-\[0_20px_60px_rgba\(15\,23\,42\,0\.45\)\] {
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
 }
