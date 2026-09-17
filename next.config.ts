@@ -14,8 +14,10 @@ const nextConfig: NextConfig = {
       apiUrl = `https://${apiUrl}`;
     }
 
-    // Удаляем слэш в конце
+    // Normalize the deployment variable so both these values work:
+    // https://example.ngrok.app and https://example.ngrok.app/api.
     apiUrl = apiUrl.replace(/\/$/, "");
+    if (!apiUrl.endsWith("/api")) apiUrl = `${apiUrl}/api`;
 
     return [
       {

@@ -10,13 +10,19 @@ const getBaseUrl = (): string => {
   // not depend on the backend allowing whichever port Next is using.
   if (typeof window !== "undefined") return `${window.location.origin}/api`;
 
-  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  const envUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
 
   if (envUrl) {
-    return envUrl.startsWith("http") ? envUrl : `http://${envUrl}`;
+    const withProtocol = envUrl.startsWith("http")
+      ? envUrl
+      : `https://${envUrl}`;
+    const normalizedUrl = withProtocol.replace(/\/$/, "");
+    return normalizedUrl.endsWith("/api")
+      ? normalizedUrl
+      : `${normalizedUrl}/api`;
   }
 
-  return "http://localhost:4000";
+  return "http://localhost:4000/api";
 };
 
 export class ApiError extends Error {
@@ -46,13 +52,22 @@ export async function fetcher<T = unknown>(
   const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   const fullUrl = `${baseUrl}${cleanEndpoint}`;
 
-  const res = await fetch(fullUrl, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-    ...options,
-  });
+  let res: Response;
+
+  try {
+    res = await fetch(fullUrl, {
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+      },
+      ...options,
+    });
+  } catch (error) {
+    throw new Error(
+      `Could not reach the API at ${baseUrl}. Check that the ngrok tunnel is online and that NEXT_PUBLIC_API_URL points to its /api URL.`,
+      { cause: error },
+    );
+  }
 
   if (!res.ok) {
     let body: unknown = null;
