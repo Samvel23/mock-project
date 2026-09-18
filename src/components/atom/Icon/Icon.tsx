@@ -1,15 +1,14 @@
 import { cn } from "@/lib/utils/cn";
 import type { IIconProps } from "./Icon.types";
-import { ICON_SIZES } from "./Icon.const";
-import { ICON_COLORS } from "./Icon.const";
+import { ICON_SIZES, ICON_COLORS } from "./Icon.const";
 
-export function Icon({
+export const Icon = ({
   icon: IconComponent,
   size = "md",
   color = "default",
   className,
   ...props
-}: IIconProps) {
+}: IIconProps) => {
   return (
     <IconComponent
       className={cn(ICON_SIZES[size], ICON_COLORS[color], className)}
@@ -17,4 +16,4 @@ export function Icon({
       {...props}
     />
   );
-}
+};

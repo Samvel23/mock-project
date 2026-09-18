@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import {
   BarElement,
@@ -12,20 +10,11 @@ import {
   TooltipItem,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import type { IChartBreakdownResponse } from "@/features/dashboard/types/chart.types";
 import { ChevronDown } from "lucide-react";
 import { Icon } from "@/components/atom";
+import type { IBarChartProps } from "./BarChart.types";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
-
-interface BarChartProps {
-  data?: IChartBreakdownResponse;
-  metric: string;
-  groupBy: string;
-  onMetricChange: (metric: string) => void;
-  onGroupByChange: (groupBy: string) => void;
-  isLoading?: boolean;
-}
 
 const formatValue = (value: number, metric: string): string =>
   metric === "revenue"
@@ -50,7 +39,7 @@ const formatMetricLabel = (metric: string): string =>
 const formatGroupLabel = (groupBy: string): string =>
   groupBy === "status" ? "status" : "category";
 
-export const BarChart: React.FC<BarChartProps> = React.memo(
+export const BarChart: React.FC<IBarChartProps> = React.memo(
   ({
     data,
     metric,

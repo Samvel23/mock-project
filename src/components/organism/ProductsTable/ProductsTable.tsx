@@ -1,20 +1,12 @@
-"use client";
-
-import React from "react";
 import { Edit3, Package, Star, Trash2 } from "lucide-react";
-import { Button } from "@/components/atom/Button/Button";
+import { toast } from "react-toastify";
+import { Button } from "@/components/atom/Button";
 import { Icon } from "@/components/atom/Icon";
-import { Typography } from "@/components/atom/Typography/Typography";
+import { Typography } from "@/components/atom/Typography";
 import { IProduct } from "@/features/products/types/product.types";
+import { IProductsTableProps } from "./ProductsTable.types";
 
-interface ProductsTableProps {
-  products: IProduct[];
-  isLoading?: boolean;
-  onEdit?: (product: IProduct) => void;
-  onDelete?: (id: string) => void;
-}
-
-export const ProductsTable: React.FC<ProductsTableProps> = ({
+export const ProductsTable: React.FC<IProductsTableProps> = ({
   products,
   isLoading,
   onEdit,
@@ -39,6 +31,54 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
 
   const getValue = (product: IProduct, key: string) =>
     (product as unknown as Record<string, unknown>)[key];
+
+  const handleDeleteClick = (id: string, title: string) => {
+    toast(
+      ({ closeToast }) => (
+        <div className="flex flex-col gap-2 p-1">
+          <Typography variant="small" className="font-medium text-slate-100">
+            Are you sure you want to delete{" "}
+            <span className="font-semibold text-rose-400">"{title}"</span>?
+          </Typography>
+          <div className="mt-2 flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={closeToast}
+              className="h-8 px-3 text-xs text-slate-300 hover:bg-slate-800"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={async () => {
+                closeToast();
+                try {
+                  await onDelete?.(id);
+                  toast.success(`Product "${title}" deleted successfully`);
+                } catch {
+                  toast.error("Failed to delete product");
+                }
+              }}
+              className="h-8 rounded-lg border border-rose-500/30 bg-rose-500/20 px-3 text-xs text-rose-400 hover:bg-rose-500/30"
+            >
+              Delete
+            </Button>
+          </div>
+        </div>
+      ),
+      {
+        position: "top-right",
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+        theme: "dark",
+      },
+    );
+  };
 
   return (
     <div className="dashboard-table overflow-hidden rounded-[28px] border border-slate-700 bg-slate-900 shadow-[0_20px_60px_rgba(15,23,42,0.45)]">
@@ -186,8 +226,8 @@ export const ProductsTable: React.FC<ProductsTableProps> = ({
                           aria-label={`Delete ${title}`}
                           variant="ghost"
                           size="sm"
-                          onClick={() => onDelete?.(id)}
-                          className="h-9 w-9 rounded-lg border border-slate-600 bg-slate-800 p-0 text-slate-300 hover:bg-red-500/10 hover:text-red-400"
+                          onClick={() => handleDeleteClick(id, title)}
+                          className="h-9 w-9 rounded-lg border border-slate-600 bg-slate-800 p-0 text-slate-300 hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed"
                         >
                           <Icon icon={Trash2} size="sm" color="danger" />
                         </Button>

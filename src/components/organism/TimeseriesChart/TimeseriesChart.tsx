@@ -1,19 +1,12 @@
 "use client";
 
 import React from "react";
-import { PerformanceChart } from "@/components/organism/PerformanceChart/PerformanceChart";
-import type { ITimeseriesResponse } from "@/features/dashboard/types/chart.types";
+import { PerformanceChart } from "@/components/organism/PerformanceChart";
 import { ChevronDown } from "lucide-react";
 import { Icon } from "@/components/atom";
+import { ITimeseriesChartProps } from "./Timeseries.types";
 
-interface TimeseriesChartProps {
-  data?: ITimeseriesResponse;
-  metric: string;
-  onMetricChange: (metric: string) => void;
-  isLoading?: boolean;
-}
-
-export const TimeseriesChart: React.FC<TimeseriesChartProps> = React.memo(
+export const TimeseriesChart: React.FC<ITimeseriesChartProps> = React.memo(
   ({ data, metric, onMetricChange, isLoading = false }) => {
     const metricLabel =
       metric === "unitsSold"

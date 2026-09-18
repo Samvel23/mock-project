@@ -1,8 +1,22 @@
-export type TButtonVariant = "primary" | "secondary" | "danger" | "ghost" | "outline";
+const BUTTON_VARIANTS = {
+  PRIMARY: "primary",
+  SECONDARY: "secondary",
+  DANGER: "danger",
+  GHOST: "ghost",
+  OUTLINE: "outline",
+} as const;
 
-export type TButtonSize = "sm" | "md" | "lg";
+const BUTTON_SIZES = {
+  SM: "sm",
+  MD: "md",
+  LG: "lg",
+} as const;
+
+export type TButtonVariant =
+  (typeof BUTTON_VARIANTS)[keyof typeof BUTTON_VARIANTS];
+export type TButtonSize = (typeof BUTTON_SIZES)[keyof typeof BUTTON_SIZES];
 
 export interface IButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: TButtonVariant;
-    size?: TButtonSize;
+  variant?: TButtonVariant;
+  size?: TButtonSize;
 }

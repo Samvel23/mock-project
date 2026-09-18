@@ -1,15 +1,9 @@
-import * as React from "react";
+import React from "react";
 import { Search } from "lucide-react";
 import { Icon } from "@/components/atom/Icon";
 import { Input } from "@/components/atom/Input";
-
-export interface ISearchInputProps extends Omit<
-  React.InputHTMLAttributes<HTMLInputElement>,
-  "type" | "onChange"
-> {
-  value?: string;
-  onChange?: (value: string) => void;
-}
+import { cn } from "@/lib/utils/cn";
+import type { ISearchInputProps } from "./SearchInput.types";
 
 export const SearchInput: React.FC<ISearchInputProps> = ({
   value,
@@ -27,9 +21,9 @@ export const SearchInput: React.FC<ISearchInputProps> = ({
       <Input
         type="search"
         value={value}
-        onChange={(event) => onChange?.(event.target.value.trim())}
+        onChange={(event) => onChange?.(event.target.value)}
         placeholder={placeholder}
-        className={className ?? "pl-10 pr-3"}
+        className={cn("pl-10 pr-8", className)}
         {...props}
       />
     </div>

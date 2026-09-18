@@ -1,4 +1,3 @@
-import React from "react";
 import {
   DollarSign,
   ShoppingBag,
@@ -7,13 +6,8 @@ import {
   Star,
   AlertTriangle,
 } from "lucide-react";
-import { KpiCard } from "@/components/molecule/KpiCard/KpiCard";
-import { IKpiResponse } from "@/features/dashboard/types/kpi.types";
-
-interface KpiGridProps {
-  data?: IKpiResponse;
-  isLoading?: boolean;
-}
+import { KpiCard } from "@/components/molecule/KpiCard";
+import { IKpiGridProps } from "./KpiGrid.types";
 
 const CARD_COUNT = 6;
 
@@ -24,7 +18,7 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 });
 const numberFormatter = new Intl.NumberFormat("en-US");
 
-export const KpiGrid: React.FC<KpiGridProps> = ({ data, isLoading }) => {
+export const KpiGrid: React.FC<IKpiGridProps> = ({ data, isLoading }) => {
   // Keep the grid shape stable while dashboard data is loading.
   if (isLoading || !data) {
     return (

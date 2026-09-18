@@ -1,217 +1,92 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { AlertTriangle, Package, PackageCheck } from "lucide-react";
-import {
-  CreateProductModal,
-  ICreateProductData,
-} from "@/components/organism/CreateProductModal/CreateProductModal";
-import { Header } from "@/components/organism/Header/Header";
+import { CreateProductModal } from "@/components/organism/CreateProductModal/CreateProductModal";
+import type { ICreateProductData } from "@/components/organism/CreateProductModal/CreateProductModal.types";
 import { KpiCard } from "@/components/molecule/KpiCard/KpiCard";
-import { Typography } from "@/components/atom/Typography/Typography";
-import {
-  EditProductModal,
-  IEditProductData,
-} from "@/components/organism/EditProductModal/EditProductModal";
+import { EditProductModal } from "@/components/organism/EditProductModal/EditProductModal";
+import type { IEditProductData } from "@/components/organism/EditProductModal/EditProductModal.types";
 import { ProductsTable } from "@/components/organism/ProductsTable/ProductsTable";
 import { ProductsToolbar } from "@/components/organism/ProductsToolbar/ProductsToolbar";
 import type { IProduct } from "@/features/products/types/product.types";
-import { productsApi } from "@/lib/api/products";
-
-const PAGE_SIZE = 8;
+import { useProducts } from "@/features/products/hooks/useProducts";
+import { useProductFilters } from "@/features/products/hooks/useProductFilters";
 
 export function ProductsClientView() {
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
 
-  const [products, setProducts] = useState<IProduct[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { products, isLoading, createProduct, editProduct, deleteProduct } =
+    useProducts();
 
-  // Load from the backend on every page visit. This is what makes a refresh
-  // show persisted products instead of recreating an in-memory demo list.
-  useEffect(() => {
-    let isMounted = true;
+  const {
+    search,
+    setSearch,
+    category,
+    setCategory,
+    page,
+    setPage,
+    resetPage,
+    totalPages,
+    filteredProducts,
+    currentProducts,
+    stats,
+  } = useProductFilters(products);
 
-    productsApi
-      .list()
-      .then((loadedProducts) => {
-        if (isMounted) setProducts(loadedProducts);
-      })
-      .catch((loadError: unknown) => {
-        if (isMounted) {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Could not load products.",
-          );
-        }
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  // The modal returns only the fields the user entered; the page completes the
-  // product model and prepends it so the new item is immediately visible.
-  const handleCreateProduct = async (product: ICreateProductData) => {
-    try {
-      setError(null);
-      const createdProduct = await productsApi.create(product);
-      setProducts((currentProducts) => [createdProduct, ...currentProducts]);
-      setPage(1);
-      setIsCreateModalOpen(false);
-    } catch (createError: unknown) {
-      setError(
-        createError instanceof Error
-          ? createError.message
-          : "Could not create product.",
-      );
-      throw createError; // rethrow so the modal can handle it too
-    }
+  const handleCreateProduct = async (data: ICreateProductData) => {
+    await createProduct(data);
+    resetPage();
+    setIsCreateModalOpen(false);
   };
 
-  // The page owns the list, so editing replaces the matching product here
-  // instead of making the table responsible for data changes.
-  const handleEditProduct = async (changes: IEditProductData) => {
+  const handleEditProduct = async (data: IEditProductData) => {
     if (!editingProduct) return;
-
-    const targetId = String(editingProduct.id ?? (editingProduct as any)._id);
-
-    try {
-      setError(null);
-      const updatedProduct = await productsApi.update(targetId, changes);
-
-      setProducts((currentProducts) =>
-        currentProducts.map((product) => {
-          const currentId = String(product.id ?? (product as any)._id);
-          const updatedId = String(
-            updatedProduct.id ?? (updatedProduct as any)._id ?? targetId,
-          );
-          return currentId === updatedId ? updatedProduct : product;
-        }),
-      );
-
-      setEditingProduct(null);
-    } catch (editError: unknown) {
-      setError(
-        editError instanceof Error
-          ? editError.message
-          : "Could not update product.",
-      );
-      // ВАЖНО: Пробрасываем ошибку дальше, чтобы EditProductModal
-      // смог поймать её в своем try...catch и показать ошибки валидации
-      throw editError;
-    }
-  };
-
-  // Delete is confirmed at the page boundary, then the table updates from the
-  // new source-of-truth array automatically.
-  const handleDeleteProduct = async (productId: string) => {
-    // Приводим ID к строке и проверяем как id, так и _id
-    const targetId = String(productId);
-    const product = products.find(
-      (item) => String(item.id ?? (item as any)._id) === targetId,
+    const targetId = String(
+      editingProduct.id ?? (editingProduct as { _id?: string })._id,
     );
-
-    if (
-      !product ||
-      !window.confirm(
-        `Delete ${product.name ?? (product as any).title ?? "product"}?`,
-      )
-    ) {
-      return;
-    }
-
-    try {
-      setError(null);
-      await productsApi.remove(targetId);
-
-      // Удаляем из состояния с такой же проверкой id / _id
-      setProducts((currentProducts) =>
-        currentProducts.filter(
-          (item) => String(item.id ?? (item as any)._id) !== targetId,
-        ),
-      );
-    } catch (deleteError: unknown) {
-      setError(
-        deleteError instanceof Error
-          ? deleteError.message
-          : "Could not delete product.",
-      );
-    }
+    await editProduct(targetId, data);
+    setEditingProduct(null);
   };
 
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      const matchesSearch =
-        product.name.toLowerCase().includes(search.toLowerCase()) ||
-        product.category.toLowerCase().includes(search.toLowerCase()) ||
-        product.sku.toLowerCase().includes(search.toLowerCase());
-
-      const matchesCategory =
-        category === "All" || product.category === category;
-
-      return matchesSearch && matchesCategory;
-    });
-  }, [products, search, category]);
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredProducts.length / PAGE_SIZE),
-  );
-  const safePage = Math.min(page, totalPages);
-  const startIndex = (safePage - 1) * PAGE_SIZE;
-  const currentProducts = filteredProducts.slice(
-    startIndex,
-    startIndex + PAGE_SIZE,
-  );
-
-  // These summary values are derived from the full inventory, so they stay
-  // stable while search and category filters change the table below.
-  const activeProducts = products.filter(
-    (product) => product.status === "active",
-  ).length;
-  const lowStockProducts = products.filter(
-    (product) => product.stock <= 20,
-  ).length;
+  const editingProductId = editingProduct
+    ? String(editingProduct.id ?? (editingProduct as { _id?: string })._id)
+    : "closed";
 
   return (
-    <main className="bg-slate-950 p-6 text-slate-100">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <Header
-          title="Products"
-          description="Manage your inventory and product performance."
-        />
+    <main className="min-h-screen bg-slate-950 p-4 sm:p-6 lg:p-8 text-slate-100">
+      <div className="mx-auto max-w-[1720px] space-y-6">
+        {/* Enhanced Header Section */}
+        <div className="flex flex-col gap-2 border-b border-slate-800/80 pb-5">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+              Products
+            </h1>
+          </div>
+          <p className="text-sm text-slate-400">
+            Manage your inventory, track stock levels, and monitor product
+            performance.
+          </p>
+        </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 lg:gap-6 md:grid-cols-3">
           <KpiCard
             title="Total products"
-            value={products.length}
+            value={stats.total}
             subtext="Across your inventory"
             icon={Package}
-            className="bg-slate-900"
           />
           <KpiCard
             title="Active products"
-            value={activeProducts}
+            value={stats.active}
             subtext="Currently available"
             icon={PackageCheck}
-            className="bg-slate-900"
           />
           <KpiCard
             title="Low stock"
-            value={lowStockProducts}
+            value={stats.lowStock}
             subtext="20 units or fewer"
             icon={AlertTriangle}
-            className="bg-slate-900"
           />
         </div>
 
@@ -219,16 +94,11 @@ export function ProductsClientView() {
           search={search}
           onSearchChange={setSearch}
           category={category}
-          onCategoryChange={(value) => {
-            setCategory(value);
-            setPage(1);
-          }}
-          page={safePage}
+          onCategoryChange={setCategory}
+          page={page}
           totalPages={totalPages}
           totalItems={filteredProducts.length}
-          onPageChange={(nextPage) =>
-            setPage(Math.min(Math.max(nextPage, 1), totalPages))
-          }
+          onPageChange={setPage}
           onAddNew={() => setIsCreateModalOpen(true)}
         />
 
@@ -236,7 +106,7 @@ export function ProductsClientView() {
           products={currentProducts}
           isLoading={isLoading}
           onEdit={setEditingProduct}
-          onDelete={handleDeleteProduct}
+          onDelete={deleteProduct}
         />
       </div>
 
@@ -247,7 +117,7 @@ export function ProductsClientView() {
       />
 
       <EditProductModal
-        key={editingProduct?.id ?? "closed"}
+        key={editingProductId}
         product={editingProduct}
         onClose={() => setEditingProduct(null)}
         onSubmit={handleEditProduct}

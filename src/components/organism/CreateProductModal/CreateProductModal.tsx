@@ -1,25 +1,15 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, X } from "lucide-react";
-import { Button } from "@/components/atom/Button/Button";
+import { Button } from "@/components/atom/Button";
 import { Icon } from "@/components/atom/Icon";
 import { Input } from "@/components/atom/Input";
-import { Typography } from "@/components/atom/Typography/Typography";
-
-export interface ICreateProductData {
-  name: string;
-  sku: string;
-  category: string;
-  price: number;
-  stock: number;
-}
-
-interface CreateProductModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (product: ICreateProductData) => void | Promise<void>;
-}
+import { Typography } from "@/components/atom/Typography";
+import {
+  ICreateProductData,
+  ICreateProductModalProps,
+} from "./CreateProductModal.types";
 
 const categories = [
   "Electronics",
@@ -42,11 +32,21 @@ export function CreateProductModal({
   isOpen,
   onClose,
   onSubmit,
-}: CreateProductModalProps) {
+}: ICreateProductModalProps) {
   const [form, setForm] = useState<ICreateProductData>(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
+
+  // Блокировка скролла body при открытом модальном окне
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -55,7 +55,6 @@ export function CreateProductModal({
     value: ICreateProductData[K],
   ) => {
     setForm((current) => ({ ...current, [field]: value }));
-    // Очищаем ошибку поля при вводе
     if (fieldErrors[field]) {
       setFieldErrors((prev) => {
         const next = { ...prev };
@@ -65,7 +64,7 @@ export function CreateProductModal({
     }
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (isSubmitting) return;
 
@@ -80,19 +79,15 @@ export function CreateProductModal({
     } catch (err: unknown) {
       let parsedError: any = err;
 
-      // Извлекаем JSON из строки, если fetcher выбросил Error("API Error [422]: {...}")
       const rawString = err instanceof Error ? err.message : String(err);
       const jsonMatch = rawString.match(/\{.*\}/s);
 
       if (jsonMatch) {
         try {
           parsedError = JSON.parse(jsonMatch[0]);
-        } catch {
-          // Если распарсить не удалось, оставляем исходный объект
-        }
+        } catch {}
       }
 
-      // Достаем details из распаршенного объекта или из структуры ошибки
       const details = parsedError?.details || parsedError?.error?.details;
       const errorsMap: Record<string, string> = {};
       const detailMessages: string[] = [];
@@ -110,7 +105,6 @@ export function CreateProductModal({
 
       setFieldErrors(errorsMap);
 
-      // Если есть понятные сообщения в details — объединяем их в красивую строку, иначе берем заголовок
       const displayMessage =
         detailMessages.length > 0
           ? detailMessages.join(". ")
@@ -123,6 +117,7 @@ export function CreateProductModal({
       setIsSubmitting(false);
     }
   };
+
   const handleClose = () => {
     if (isSubmitting) return;
     setFieldErrors({});

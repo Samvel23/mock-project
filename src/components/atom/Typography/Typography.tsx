@@ -2,12 +2,12 @@ import type { ITypographyProps } from "./Typography.types";
 import { TYPOGRAPHY_VARIANTS } from "./Typography.const";
 import { cn } from "@/lib/utils/cn";
 
-export function Typography({
+export const Typography = ({
   variant = "body",
   className,
   children,
   ...props
-}: ITypographyProps) {
+}: ITypographyProps) => {
   const Tag = (variant.startsWith("h") ? variant : "p") as React.ElementType;
 
   return (
@@ -22,4 +22,4 @@ export function Typography({
       {children}
     </Tag>
   );
-}
+};

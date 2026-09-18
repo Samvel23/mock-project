@@ -1,15 +1,14 @@
-"use client";
 import { cn } from "@/lib/utils/cn";
 import { BUTTON_SIZES, BUTTON_VARIANTS } from "./Button.const";
 import { IButtonProps } from "./Button.types";
 
-export function Button({
+export const Button = ({
   variant = "primary",
   size = "md",
   className,
   children,
   ...props
-}: IButtonProps) {
+}: IButtonProps) => {
   return (
     <button
       className={cn(
@@ -23,4 +22,4 @@ export function Button({
       {children}
     </button>
   );
-}
+};

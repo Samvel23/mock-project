@@ -1,35 +1,10 @@
-"use client";
-
-import { useEffect, useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
-import { Button } from "@/components/atom/Button/Button";
+import { Button } from "@/components/atom/Button";
 import { Icon } from "@/components/atom/Icon";
+import { useTheme } from "@/hooks/useTheme";
 
 export function ThemeToggle() {
-  const isLight = useSyncExternalStore(
-    (onChange) => {
-      window.addEventListener("dashboard-theme-change", onChange);
-      return () =>
-        window.removeEventListener("dashboard-theme-change", onChange);
-    },
-    () => window.localStorage.getItem("dashboard-theme") === "light",
-    () => false,
-  );
-
-  // Apply the saved theme after hydration. The server snapshot remains dark so
-  // the initial button markup stays hydration-safe.
-  useEffect(() => {
-    document.documentElement.dataset.theme = isLight ? "light" : "dark";
-  }, [isLight]);
-
-  const toggleTheme = () => {
-    const nextIsLight = !isLight;
-    window.localStorage.setItem(
-      "dashboard-theme",
-      nextIsLight ? "light" : "dark",
-    );
-    window.dispatchEvent(new Event("dashboard-theme-change"));
-  };
+  const { isLight, toggleTheme } = useTheme();
 
   return (
     <Button

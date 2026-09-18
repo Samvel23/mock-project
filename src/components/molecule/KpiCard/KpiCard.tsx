@@ -3,6 +3,7 @@ import { KpiCardProps } from "./KpiCard.types";
 import { Icon } from "@/components/atom/Icon";
 import { Typography } from "@/components/atom/Typography/Typography";
 import { cn } from "@/lib/utils/cn";
+
 const ICON_VARIANTS = {
   default: "bg-sky-500/15 ring-sky-400/20",
   success: "bg-emerald-500/15 ring-emerald-400/20",
@@ -21,28 +22,31 @@ export const KpiCard: React.FC<KpiCardProps> = ({
   return (
     <div
       className={cn(
-        "group rounded-2xl border border-slate-700 bg-slate-900 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-600 hover:bg-slate-800",
+        "group rounded-xl border border-slate-800 bg-slate-900 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-700 hover:bg-slate-800/80",
         className,
       )}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <Typography variant="small" className="font-medium text-slate-400">
           {title}
         </Typography>
         <div
           className={cn(
-            "rounded-xl p-2.5 ring-1 transition-transform duration-200 group-hover:scale-105",
+            "rounded-lg p-2 ring-1 transition-transform duration-200 group-hover:scale-105",
             ICON_VARIANTS[variant],
           )}
         >
-          {IconGlyph && <Icon icon={IconGlyph} size="md" color={variant} />}
+          {IconGlyph && <Icon icon={IconGlyph} size="sm" color={variant} />}
         </div>
       </div>
-      <Typography variant="h2" className="mt-5 text-2xl font-bold text-white">
+      <Typography
+        variant="h2"
+        className="mt-2 text-xl font-bold text-white sm:text-2xl"
+      >
         {value}
       </Typography>
       {subtext && (
-        <Typography variant="small" className="mt-2 text-slate-400">
+        <Typography variant="small" className="mt-0.5 text-xs text-slate-400">
           {subtext}
         </Typography>
       )}

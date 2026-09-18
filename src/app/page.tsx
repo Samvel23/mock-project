@@ -1,14 +1,12 @@
 import { chartsApi } from "@/lib/api/charts";
-import { Typography } from "@/components/atom/Typography/Typography";
 import { KpiGrid } from "@/components/organism/KpiGrid/KpiGrid";
 import { DashboardCharts } from "@/components/organism/DashboardCharts";
 import { TopProductsChart } from "@/components/organism/TopProductsChart";
 import { TimeseriesChart } from "@/components/organism/TimeseriesChart";
 import { BarChart } from "@/components/organism/BarChart";
 import type { ComponentProps } from "react";
-import { Header } from "@/components/organism";
 
-export const revalidate = 60; // ISR: кэширование на 60 секунд
+export const revalidate = 60; // ISR: 60 second caching
 
 export default async function Home() {
   let kpiData: ComponentProps<typeof KpiGrid>["data"];
@@ -33,19 +31,23 @@ export default async function Home() {
   }
 
   return (
-    <main className="bg-slate-950 p-6 text-slate-100">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <div>
-          <Header
-            title="Dashboard"
-            description="Track revenue, inventory, and category performance."
-          />
+    <main className="min-h-screen bg-slate-950 p-4 sm:p-6 lg:p-8 text-slate-100">
+      <div className="mx-auto max-w-[1720px] space-y-6">
+        {/* Enhanced Header Section */}
+        <div className="flex flex-col gap-2 border-b border-slate-800/80 pb-5">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+              Dashboard
+            </h1>
+          </div>
+          <p className="text-sm text-slate-400">
+            Track revenue, inventory, and category performance across your
+            platform.
+          </p>
         </div>
 
         <KpiGrid data={kpiData} />
 
-        {/* The server provides the initial chart data. DashboardCharts then
-            owns interactive selectors and refetches only the changed chart. */}
         <DashboardCharts
           initialTimeseries={chartData}
           initialBreakdown={breakdownData}

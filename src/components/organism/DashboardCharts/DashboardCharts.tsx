@@ -1,36 +1,28 @@
-"use client";
+"use client"
 
 import { useCallback, useState } from "react";
 import { BarChart } from "@/components/organism/BarChart";
 import { TimeseriesChart } from "@/components/organism/TimeseriesChart";
 import { TopProductsChart } from "@/components/organism/TopProductsChart";
 import { chartsApi } from "@/lib/api/charts";
-import type {
-  IChartBreakdownResponse,
-  IChartTopResponse,
-  ITimeseriesResponse,
-} from "@/features/dashboard/types/chart.types";
-
-type ChartMetric = "count" | "unitsSold" | "revenue";
-type TopMetric = "unitsSold" | "revenue";
-
-interface DashboardChartsProps {
-  initialTimeseries?: ITimeseriesResponse;
-  initialBreakdown?: IChartBreakdownResponse;
-  initialTopProducts?: IChartTopResponse;
-}
+import type { ITimeseriesResponse } from "@/features/dashboard/types/chart.types";
+import {
+  IDashboardChartsProps,
+  TChartMetric,
+  TTopMetric,
+} from "./DashboardCharts.types";
 
 export function DashboardCharts({
   initialTimeseries,
   initialBreakdown,
   initialTopProducts,
-}: DashboardChartsProps) {
+}: IDashboardChartsProps) {
   const [timeseriesMetric, setTimeseriesMetric] =
-    useState<ChartMetric>("revenue");
+    useState<TChartMetric>("revenue");
   const [breakdownMetric, setBreakdownMetric] =
-    useState<ChartMetric>("revenue");
+    useState<TChartMetric>("revenue");
   const [breakdownGroupBy, setBreakdownGroupBy] = useState("category");
-  const [topMetric, setTopMetric] = useState<TopMetric>("unitsSold");
+  const [topMetric, setTopMetric] = useState<TTopMetric>("unitsSold");
 
   const [timeseries, setTimeseries] = useState(initialTimeseries);
   const [breakdown, setBreakdown] = useState(initialBreakdown);
@@ -41,7 +33,7 @@ export function DashboardCharts({
   // Each selector owns one request. Updating one chart does not reset the
   // other chart's data or make the whole dashboard wait for a new response.
   const handleTimeseriesMetricChange = useCallback(async (metric: string) => {
-    const nextMetric = metric as ChartMetric;
+    const nextMetric = metric as TChartMetric;
     setTimeseriesMetric(nextMetric);
     setLoadingChart("timeseries");
     setChartError(null);
@@ -64,7 +56,7 @@ export function DashboardCharts({
   }, []);
 
   const handleBreakdownChange = useCallback(
-    async (nextMetric: ChartMetric, nextGroupBy: string) => {
+    async (nextMetric: TChartMetric, nextGroupBy: string) => {
       setBreakdownMetric(nextMetric);
       setBreakdownGroupBy(nextGroupBy);
       setLoadingChart("breakdown");
@@ -89,7 +81,7 @@ export function DashboardCharts({
     [],
   );
 
-  const handleTopMetricChange = useCallback(async (metric: TopMetric) => {
+  const handleTopMetricChange = useCallback(async (metric: TTopMetric) => {
     setTopMetric(metric);
     setLoadingChart("top");
     setChartError(null);
@@ -110,7 +102,7 @@ export function DashboardCharts({
 
   const handleBreakdownMetricChange = useCallback(
     (metric: string) =>
-      handleBreakdownChange(metric as ChartMetric, breakdownGroupBy),
+      handleBreakdownChange(metric as TChartMetric, breakdownGroupBy),
     [breakdownGroupBy, handleBreakdownChange],
   );
 

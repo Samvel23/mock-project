@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import {
   Chart as ChartJS,
@@ -14,6 +12,7 @@ import {
   TooltipItem,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
+import { IPerformanceChartProps } from "./PerformanceChart.types";
 
 ChartJS.register(
   CategoryScale,
@@ -25,22 +24,6 @@ ChartJS.register(
   Filler,
 );
 
-export interface ITimeseriesDataPoint {
-  label: string;
-  value: number;
-}
-
-export interface ITimeseriesResponse {
-  metric: string;
-  interval: "day" | "month";
-  points: ITimeseriesDataPoint[];
-}
-
-interface PerformanceChartProps {
-  data?: ITimeseriesResponse;
-  isLoading?: boolean;
-}
-
 const formatValue = (value: number, metric?: string): string => {
   if (metric === "revenue") {
     return `$${(value / 1_000_000).toFixed(1)}M`;
@@ -48,7 +31,7 @@ const formatValue = (value: number, metric?: string): string => {
   return new Intl.NumberFormat("en-US").format(value);
 };
 
-export const PerformanceChart: React.FC<PerformanceChartProps> = ({
+export const PerformanceChart: React.FC<IPerformanceChartProps> = ({
   data,
   isLoading,
 }) => {

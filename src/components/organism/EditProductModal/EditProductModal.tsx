@@ -1,26 +1,17 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ChevronDown, X } from "lucide-react";
-import { Button } from "@/components/atom/Button/Button";
+import { toast } from "react-toastify";
+import { Button } from "@/components/atom/Button";
 import { Input } from "@/components/atom/Input";
-import { Typography } from "@/components/atom/Typography/Typography";
+import { Typography } from "@/components/atom/Typography";
 import type { IProduct } from "@/features/products/types/product.types";
 import { Icon } from "@/components/atom/Icon";
-
-export interface IEditProductData {
-  name: string;
-  sku: string;
-  category: string;
-  price: number;
-  stock: number;
-}
-
-interface EditProductModalProps {
-  product: IProduct | null;
-  onClose: () => void;
-  onSubmit: (product: IEditProductData) => void | Promise<void>;
-}
+import {
+  IEditProductData,
+  IEditProductModalProps,
+} from "./EditProductModal.types";
 
 const categories = [
   "Electronics",
@@ -43,13 +34,40 @@ export function EditProductModal({
   product,
   onClose,
   onSubmit,
-}: EditProductModalProps) {
-  const [form, setForm] = useState<IEditProductData | null>(() =>
-    product ? getFormValues(product) : null,
+}: IEditProductModalProps) {
+  const initialForm = useMemo(
+    () => (product ? getFormValues(product) : null),
+    [product],
   );
+
+  const [form, setForm] = useState<IEditProductData | null>(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
+
+  // Блокировка скролла body при открытом модальном окне
+  useEffect(() => {
+    if (product) {
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [product]);
+
+  const isDirty = useMemo(() => {
+    if (!form || !initialForm) return false;
+
+    return (
+      form.name !== initialForm.name ||
+      form.sku !== initialForm.sku ||
+      form.category !== initialForm.category ||
+      Number(form.price) !== Number(initialForm.price) ||
+      Number(form.stock) !== Number(initialForm.stock)
+    );
+  }, [form, initialForm]);
+
+  const isDisabled = isSubmitting || !isDirty;
 
   if (!product || !form) return null;
 
@@ -67,9 +85,9 @@ export function EditProductModal({
     }
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isSubmitting) return;
+    if (isDisabled) return;
 
     setIsSubmitting(true);
     setFieldErrors({});
@@ -77,19 +95,19 @@ export function EditProductModal({
 
     try {
       await onSubmit(form);
+      toast.success(`Product updated to "${form.name}" successfully!`);
       onClose();
     } catch (err: unknown) {
-      let parsedError: any = err;
+      toast.error("Failed to update product");
 
+      let parsedError: any = err;
       const rawString = err instanceof Error ? err.message : String(err);
       const jsonMatch = rawString.match(/\{.*\}/s);
 
       if (jsonMatch) {
         try {
           parsedError = JSON.parse(jsonMatch[0]);
-        } catch {
-          // Игнорируем ошибку парсинга
-        }
+        } catch {}
       }
 
       const details = parsedError?.details || parsedError?.error?.details;
@@ -163,7 +181,7 @@ export function EditProductModal({
             aria-label="Close edit product dialog"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="h-9 w-9 rounded-lg p-0 text-slate-400 hover:bg-slate-800 hover:text-white"
+            className="h-9 w-9 rounded-lg p-0 text-slate-400 hover:bg-slate-800 hover:text-white disabled:cursor-not-allowed"
           >
             <Icon icon={X} size="sm" color="muted" />
           </Button>
@@ -220,7 +238,7 @@ export function EditProductModal({
                   onChange={(event) =>
                     updateField("category", event.target.value)
                   }
-                  className="h-11 w-full appearance-none cursor-pointer rounded-xl border border-slate-700 bg-slate-950 pl-3.5 pr-10 text-sm text-slate-100 outline-none focus:border-blue-500 disabled:opacity-50"
+                  className="h-11 w-full appearance-none cursor-pointer rounded-xl border border-slate-700 bg-slate-950 pl-3.5 pr-10 text-sm text-slate-100 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {categories.map((category) => (
                     <option key={category} value={category}>
@@ -287,10 +305,16 @@ export function EditProductModal({
               variant="secondary"
               onClick={handleClose}
               disabled={isSubmitting}
+              className="disabled:cursor-not-allowed"
             >
               Cancel
             </Button>
-            <Button type="submit" variant="primary" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              variant={isDisabled ? "ghost" : "primary"}
+              disabled={isDisabled}
+              className="disabled:cursor-not-allowed"
+            >
               {isSubmitting ? "Saving..." : "Save changes"}
             </Button>
           </div>

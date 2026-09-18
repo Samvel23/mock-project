@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { ThemeToggle } from "@/components/molecule/ThemeToggle";
 import { Sidebar } from "@/components/organism/Sidebar/Sidebar";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
 
 const inter = Inter({
@@ -42,9 +43,10 @@ export default function RootLayout({
         <div className="flex min-h-screen w-full flex-col md:h-screen md:flex-row md:overflow-hidden">
           <Sidebar />
           <div className="flex flex-1 flex-col md:min-h-0 md:overflow-y-auto">
-            <main className="flex-1 p-4 pt-16 pb-24 md:p-6">{children}</main>
+            <main className="flex-1">{children}</main>
           </div>
         </div>
+        <ToastContainer theme="dark" position="top-right" />
       </body>
     </html>
   );
