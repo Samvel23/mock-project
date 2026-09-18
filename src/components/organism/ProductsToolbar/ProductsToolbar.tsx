@@ -4,7 +4,6 @@ import React from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  Filter,
   Plus,
   SlidersHorizontal,
 } from "lucide-react";
@@ -79,16 +78,6 @@ export const ProductsToolbar: React.FC<ProductsToolbarProps> = ({
                 ))}
               </select>
             </div>
-
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="gap-2 rounded-xl border border-slate-700 bg-slate-950 text-slate-200 hover:bg-slate-800"
-            >
-              <Icon icon={Filter} size="sm" color="muted" />
-              Filters
-            </Button>
           </div>
         </div>
 
@@ -120,6 +109,7 @@ export const ProductsToolbar: React.FC<ProductsToolbarProps> = ({
             type="button"
             variant="secondary"
             size="sm"
+            aria-label="Previous page"
             disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
             className={cn(
@@ -136,6 +126,7 @@ export const ProductsToolbar: React.FC<ProductsToolbarProps> = ({
             type="button"
             variant="secondary"
             size="sm"
+            aria-label="Next page"
             disabled={page >= totalPages}
             onClick={() => onPageChange(page + 1)}
             className={cn(

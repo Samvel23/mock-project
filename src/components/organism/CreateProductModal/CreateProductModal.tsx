@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/atom/Button/Button";
 import { Icon } from "@/components/atom/Icon";
 import { Input } from "@/components/atom/Input";
@@ -15,12 +15,10 @@ export interface ICreateProductData {
   stock: number;
 }
 
-// The parent controls whether the modal is visible and receives the completed
-// form through onSubmit. The modal itself only manages temporary input values.
 interface CreateProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (product: ICreateProductData) => void;
+  onSubmit: (product: ICreateProductData) => void | Promise<void>;
 }
 
 const categories = [
@@ -32,53 +30,112 @@ const categories = [
   "Home",
 ];
 
+const emptyForm: ICreateProductData = {
+  name: "",
+  sku: "",
+  category: categories[0],
+  price: 0,
+  stock: 0,
+};
+
 export function CreateProductModal({
   isOpen,
   onClose,
   onSubmit,
 }: CreateProductModalProps) {
-  // Each input is controlled by React, so form always contains the latest value
-  // shown in the modal.
-  const [form, setForm] = useState<ICreateProductData>({
-    name: "",
-    sku: "",
-    category: categories[0],
-    price: 0,
-    stock: 0,
-  });
+  const [form, setForm] = useState<ICreateProductData>(emptyForm);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState<string | null>(null);
 
-  // Returning null keeps the modal out of the DOM until the parent opens it.
   if (!isOpen) return null;
 
-  // Prevent the browser reload, send the values to the page, then prepare a
-  // blank form for the next time the modal opens.
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    onSubmit(form);
-    setForm({
-      name: "",
-      sku: "",
-      category: categories[0],
-      price: 0,
-      stock: 0,
-    });
-  };
-
-  // This generic helper updates one property while preserving the other form
-  // values. The K type keeps the field name and value type connected.
   const updateField = <K extends keyof ICreateProductData>(
     field: K,
     value: ICreateProductData[K],
-  ) => setForm((current) => ({ ...current, [field]: value }));
+  ) => {
+    setForm((current) => ({ ...current, [field]: value }));
+    // Очищаем ошибку поля при вводе
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setFieldErrors({});
+    setGeneralError(null);
+
+    try {
+      await onSubmit(form);
+      setForm(emptyForm);
+      onClose();
+    } catch (err: unknown) {
+      let parsedError: any = err;
+
+      // Извлекаем JSON из строки, если fetcher выбросил Error("API Error [422]: {...}")
+      const rawString = err instanceof Error ? err.message : String(err);
+      const jsonMatch = rawString.match(/\{.*\}/s);
+
+      if (jsonMatch) {
+        try {
+          parsedError = JSON.parse(jsonMatch[0]);
+        } catch {
+          // Если распарсить не удалось, оставляем исходный объект
+        }
+      }
+
+      // Достаем details из распаршенного объекта или из структуры ошибки
+      const details = parsedError?.details || parsedError?.error?.details;
+      const errorsMap: Record<string, string> = {};
+      const detailMessages: string[] = [];
+
+      if (Array.isArray(details)) {
+        details.forEach((item: { field?: string; message?: string }) => {
+          if (item.field && item.message) {
+            errorsMap[item.field] = item.message;
+          }
+          if (item.message) {
+            detailMessages.push(item.message);
+          }
+        });
+      }
+
+      setFieldErrors(errorsMap);
+
+      // Если есть понятные сообщения в details — объединяем их в красивую строку, иначе берем заголовок
+      const displayMessage =
+        detailMessages.length > 0
+          ? detailMessages.join(". ")
+          : parsedError?.error?.message ||
+            parsedError?.message ||
+            "Validation failed";
+
+      setGeneralError(displayMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const handleClose = () => {
+    if (isSubmitting) return;
+    setFieldErrors({});
+    setGeneralError(null);
+    onClose();
+  };
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm"
       role="presentation"
       onMouseDown={(event) => {
-        // Clicking the dark area closes the dialog; clicking inside the form
-        // does not because the event target is not the overlay itself.
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) handleClose();
       }}
     >
       <section
@@ -105,25 +162,35 @@ export function CreateProductModal({
             variant="ghost"
             size="sm"
             aria-label="Close create product dialog"
-            onClick={onClose}
+            onClick={handleClose}
+            disabled={isSubmitting}
             className="h-9 w-9 rounded-lg p-0 text-slate-400 hover:bg-slate-800 hover:text-white"
           >
             <Icon icon={X} size="sm" color="muted" />
           </Button>
         </div>
 
+        {generalError && (
+          <div className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-400">
+            {generalError}
+          </div>
+        )}
+
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          {/* Inputs use value + onChange, which makes them controlled inputs. */}
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-slate-300">
               Product name
             </span>
             <Input
               required
+              disabled={isSubmitting}
               value={form.name}
               onChange={(event) => updateField("name", event.target.value)}
               placeholder="e.g. AeroHead 37"
             />
+            {fieldErrors.name && (
+              <p className="mt-1 text-xs text-rose-400">{fieldErrors.name}</p>
+            )}
           </label>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -133,29 +200,39 @@ export function CreateProductModal({
               </span>
               <Input
                 required
+                disabled={isSubmitting}
                 value={form.sku}
                 onChange={(event) => updateField("sku", event.target.value)}
                 placeholder="SKU-0037"
               />
+              {fieldErrors.sku && (
+                <p className="mt-1 text-xs text-rose-400">{fieldErrors.sku}</p>
+              )}
             </label>
 
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium text-slate-300">
                 Category
               </span>
-              <select
-                value={form.category}
-                onChange={(event) =>
-                  updateField("category", event.target.value)
-                }
-                className="h-11 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm text-slate-100 outline-none focus:border-blue-500"
-              >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
+              <div className="relative flex w-full items-center">
+                <select
+                  disabled={isSubmitting}
+                  value={form.category}
+                  onChange={(event) =>
+                    updateField("category", event.target.value)
+                  }
+                  className="h-11 w-full appearance-none cursor-pointer rounded-xl border border-slate-700 bg-slate-950 pl-3.5 pr-10 text-sm text-slate-100 outline-none focus:border-blue-500 disabled:opacity-50"
+                >
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
+                  <Icon icon={ChevronDown} size="sm" color="muted" />
+                </div>
+              </div>
             </label>
           </div>
 
@@ -166,14 +243,20 @@ export function CreateProductModal({
               </span>
               <Input
                 required
-                min="0"
-                step="0.01"
+                disabled={isSubmitting}
                 type="number"
+                step="1"
+                min="0"
                 value={form.price}
                 onChange={(event) =>
                   updateField("price", Number(event.target.value))
                 }
               />
+              {fieldErrors.price && (
+                <p className="mt-1 text-xs text-rose-400">
+                  {fieldErrors.price}
+                </p>
+              )}
             </label>
 
             <label className="block">
@@ -182,23 +265,34 @@ export function CreateProductModal({
               </span>
               <Input
                 required
-                min="0"
-                step="1"
+                disabled={isSubmitting}
                 type="number"
+                step="1"
+                min="0"
                 value={form.stock}
                 onChange={(event) =>
                   updateField("stock", Number(event.target.value))
                 }
               />
+              {fieldErrors.stock && (
+                <p className="mt-1 text-xs text-rose-400">
+                  {fieldErrors.stock}
+                </p>
+              )}
             </label>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={onClose}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleClose}
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
-            <Button type="submit" variant="primary">
-              Create product
+            <Button type="submit" variant="primary" disabled={isSubmitting}>
+              {isSubmitting ? "Creating..." : "Create product"}
             </Button>
           </div>
         </form>

@@ -27,7 +27,7 @@ export const SearchInput: React.FC<ISearchInputProps> = ({
       <Input
         type="search"
         value={value}
-        onChange={(event) => onChange?.(event.target.value)}
+        onChange={(event) => onChange?.(event.target.value.trim())}
         placeholder={placeholder}
         className={className ?? "pl-10 pr-3"}
         {...props}

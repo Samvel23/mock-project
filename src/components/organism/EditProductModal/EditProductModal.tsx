@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/atom/Button/Button";
 import { Input } from "@/components/atom/Input";
 import { Typography } from "@/components/atom/Typography/Typography";
@@ -19,7 +19,7 @@ export interface IEditProductData {
 interface EditProductModalProps {
   product: IProduct | null;
   onClose: () => void;
-  onSubmit: (product: IEditProductData) => void;
+  onSubmit: (product: IEditProductData) => void | Promise<void>;
 }
 
 const categories = [
@@ -44,34 +44,97 @@ export function EditProductModal({
   onClose,
   onSubmit,
 }: EditProductModalProps) {
-  // The page key remounts this component for each selected product, so React
-  // initializes the controlled form with the selected row's values.
   const [form, setForm] = useState<IEditProductData | null>(() =>
     product ? getFormValues(product) : null,
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState<string | null>(null);
 
   if (!product || !form) return null;
 
-  // Prevent a page reload and send only editable fields back to the parent.
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    onSubmit(form);
-  };
-
-  // The generic key keeps each field paired with the correct value type.
   const updateField = <K extends keyof IEditProductData>(
     field: K,
     value: IEditProductData[K],
-  ) =>
+  ) => {
     setForm((current) => (current ? { ...current, [field]: value } : current));
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setFieldErrors({});
+    setGeneralError(null);
+
+    try {
+      await onSubmit(form);
+      onClose();
+    } catch (err: unknown) {
+      let parsedError: any = err;
+
+      const rawString = err instanceof Error ? err.message : String(err);
+      const jsonMatch = rawString.match(/\{.*\}/s);
+
+      if (jsonMatch) {
+        try {
+          parsedError = JSON.parse(jsonMatch[0]);
+        } catch {
+          // Игнорируем ошибку парсинга
+        }
+      }
+
+      const details = parsedError?.details || parsedError?.error?.details;
+      const errorsMap: Record<string, string> = {};
+      const detailMessages: string[] = [];
+
+      if (Array.isArray(details)) {
+        details.forEach((item: { field?: string; message?: string }) => {
+          if (item.field && item.message) {
+            errorsMap[item.field] = item.message;
+          }
+          if (item.message) {
+            detailMessages.push(item.message);
+          }
+        });
+      }
+
+      setFieldErrors(errorsMap);
+
+      const displayMessage =
+        detailMessages.length > 0
+          ? detailMessages.join(". ")
+          : parsedError?.error?.message ||
+            parsedError?.message ||
+            "Validation failed";
+
+      setGeneralError(displayMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (isSubmitting) return;
+    setFieldErrors({});
+    setGeneralError(null);
+    onClose();
+  };
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm"
       role="presentation"
       onMouseDown={(event) => {
-        // Only a click on the backdrop closes the modal, not a click inside it.
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) handleClose();
       }}
     >
       <section
@@ -98,25 +161,35 @@ export function EditProductModal({
             variant="ghost"
             size="sm"
             aria-label="Close edit product dialog"
-            onClick={onClose}
+            onClick={handleClose}
+            disabled={isSubmitting}
             className="h-9 w-9 rounded-lg p-0 text-slate-400 hover:bg-slate-800 hover:text-white"
           >
             <Icon icon={X} size="sm" color="muted" />
           </Button>
         </div>
 
+        {generalError && (
+          <div className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-400">
+            {generalError}
+          </div>
+        )}
+
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          {/* Controlled inputs read from form and update it through onChange. */}
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium text-slate-300">
               Product name
             </span>
             <Input
               required
+              disabled={isSubmitting}
               value={form.name}
               onChange={(event) => updateField("name", event.target.value)}
               placeholder="e.g. AeroHead 37"
             />
+            {fieldErrors.name && (
+              <p className="mt-1 text-xs text-rose-400">{fieldErrors.name}</p>
+            )}
           </label>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -126,29 +199,39 @@ export function EditProductModal({
               </span>
               <Input
                 required
+                disabled={isSubmitting}
                 value={form.sku}
                 onChange={(event) => updateField("sku", event.target.value)}
                 placeholder="SKU-0037"
               />
+              {fieldErrors.sku && (
+                <p className="mt-1 text-xs text-rose-400">{fieldErrors.sku}</p>
+              )}
             </label>
 
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium text-slate-300">
                 Category
               </span>
-              <select
-                value={form.category}
-                onChange={(event) =>
-                  updateField("category", event.target.value)
-                }
-                className="h-11 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm text-slate-100 outline-none focus:border-blue-500"
-              >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
+              <div className="relative flex w-full items-center">
+                <select
+                  disabled={isSubmitting}
+                  value={form.category}
+                  onChange={(event) =>
+                    updateField("category", event.target.value)
+                  }
+                  className="h-11 w-full appearance-none cursor-pointer rounded-xl border border-slate-700 bg-slate-950 pl-3.5 pr-10 text-sm text-slate-100 outline-none focus:border-blue-500 disabled:opacity-50"
+                >
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
+                  <Icon icon={ChevronDown} size="sm" color="muted" />
+                </div>
+              </div>
             </label>
           </div>
 
@@ -159,14 +242,20 @@ export function EditProductModal({
               </span>
               <Input
                 required
+                disabled={isSubmitting}
+                type="number"
                 min="0"
                 step="0.01"
-                type="number"
                 value={form.price}
                 onChange={(event) =>
                   updateField("price", Number(event.target.value))
                 }
               />
+              {fieldErrors.price && (
+                <p className="mt-1 text-xs text-rose-400">
+                  {fieldErrors.price}
+                </p>
+              )}
             </label>
 
             <label className="block">
@@ -175,23 +264,34 @@ export function EditProductModal({
               </span>
               <Input
                 required
+                disabled={isSubmitting}
+                type="number"
                 min="0"
                 step="1"
-                type="number"
                 value={form.stock}
                 onChange={(event) =>
                   updateField("stock", Number(event.target.value))
                 }
               />
+              {fieldErrors.stock && (
+                <p className="mt-1 text-xs text-rose-400">
+                  {fieldErrors.stock}
+                </p>
+              )}
             </label>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={onClose}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleClose}
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
-            <Button type="submit" variant="primary">
-              Save changes
+            <Button type="submit" variant="primary" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save changes"}
             </Button>
           </div>
         </form>

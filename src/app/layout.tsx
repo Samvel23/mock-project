@@ -4,12 +4,27 @@ import { ThemeToggle } from "@/components/molecule/ThemeToggle";
 import { Sidebar } from "@/components/organism/Sidebar/Sidebar";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  preload: true,
+});
 
 export const metadata: Metadata = {
   title: "Inventory Admin Console",
   description: "Inventory health and sales analytics",
 };
+
+const themeScript = `(function() {
+  try {
+    var savedTheme = localStorage.getItem('dashboard-theme');
+    if (savedTheme === 'light') {
+      document.documentElement.dataset.theme = 'light';
+    } else {
+      document.documentElement.dataset.theme = 'dark';
+    }
+  } catch (e) {}
+})();`;
 
 export default function RootLayout({
   children,
@@ -17,16 +32,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <div className="flex min-h-screen">
+    <html lang="en" className="h-full" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body
+        className={`${inter.className} min-h-full bg-slate-950 text-slate-100 antialiased`}
+      >
+        <div className="flex min-h-screen w-full flex-col md:h-screen md:flex-row md:overflow-hidden">
           <Sidebar />
-          <main className="flex-1">
-            <header className="flex justify-end border-b border-slate-800 bg-slate-950 p-4">
-              <ThemeToggle />
-            </header>
-            {children}
-          </main>
+          <div className="flex flex-1 flex-col md:min-h-0 md:overflow-y-auto">
+            <main className="flex-1 p-4 pt-16 pb-24 md:p-6">{children}</main>
+          </div>
         </div>
       </body>
     </html>

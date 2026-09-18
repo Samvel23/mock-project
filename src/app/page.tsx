@@ -6,6 +6,7 @@ import { TopProductsChart } from "@/components/organism/TopProductsChart";
 import { TimeseriesChart } from "@/components/organism/TimeseriesChart";
 import { BarChart } from "@/components/organism/BarChart";
 import type { ComponentProps } from "react";
+import { Header } from "@/components/organism";
 
 export const revalidate = 60; // ISR: кэширование на 60 секунд
 
@@ -32,15 +33,13 @@ export default async function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 p-6 text-slate-100">
+    <main className="bg-slate-950 p-6 text-slate-100">
       <div className="mx-auto max-w-7xl space-y-6">
         <div>
-          <Typography variant="h1" className="text-3xl font-bold text-white">
-            Dashboard
-          </Typography>
-          <Typography variant="small" className="mt-1 text-slate-400">
-            Track revenue, inventory, and category performance.
-          </Typography>
+          <Header
+            title="Dashboard"
+            description="Track revenue, inventory, and category performance."
+          />
         </div>
 
         <KpiGrid data={kpiData} />

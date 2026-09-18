@@ -13,6 +13,8 @@ import {
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import type { IChartBreakdownResponse } from "@/features/dashboard/types/chart.types";
+import { ChevronDown } from "lucide-react";
+import { Icon } from "@/components/atom";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
@@ -129,26 +131,37 @@ export const BarChart: React.FC<BarChartProps> = React.memo(
               Compare category performance
             </p>
           </div>
+
           <div className="flex flex-wrap items-center gap-2">
-            <select
-              value={metric}
-              onChange={(event) => onMetricChange(event.target.value)}
-              className="rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-2 text-xs text-slate-200 outline-none focus:border-indigo-400"
-              aria-label="Breakdown metric"
-            >
-              <option value="revenue">Revenue</option>
-              <option value="unitsSold">Units sold</option>
-              <option value="count">Count</option>
-            </select>
-            <select
-              value={groupBy}
-              onChange={(event) => onGroupByChange(event.target.value)}
-              className="rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-2 text-xs text-slate-200 outline-none focus:border-indigo-400"
-              aria-label="Breakdown grouping"
-            >
-              <option value="category">Category</option>
-              <option value="status">Status</option>
-            </select>
+            <div className="relative inline-flex items-center">
+              <select
+                value={metric}
+                onChange={(event) => onMetricChange(event.target.value)}
+                className="rounded-lg border border-slate-700 bg-slate-950 pl-2.5 pr-8 py-2 appearance-none cursor-pointer text-xs text-slate-200 outline-none focus:border-indigo-400"
+                aria-label="Breakdown metric"
+              >
+                <option value="revenue">Revenue</option>
+                <option value="unitsSold">Units sold</option>
+                <option value="count">Count</option>
+              </select>
+              <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
+                <Icon icon={ChevronDown} size="sm" color="muted" />
+              </div>
+            </div>
+            <div className="relative inline-flex items-center">
+              <select
+                value={groupBy}
+                onChange={(event) => onGroupByChange(event.target.value)}
+                className="rounded-lg appearance-none border border-slate-700 bg-slate-950 cursor-pointer pl-2.5 pr-8 py-2 text-xs text-slate-200 outline-none focus:border-indigo-400"
+                aria-label="Breakdown grouping"
+              >
+                <option value="category">Category</option>
+                <option value="status">Status</option>
+              </select>
+              <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
+                <Icon icon={ChevronDown} size="sm" color="muted" />
+              </div>
+            </div>
           </div>
         </div>
 

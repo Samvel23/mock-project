@@ -13,6 +13,8 @@ import {
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import type { IChartTopResponse } from "@/features/dashboard/types/chart.types";
+import { ChevronDown } from "lucide-react";
+import { Icon } from "@/components/atom";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
@@ -110,17 +112,22 @@ export const TopProductsChart: React.FC<TopProductsChartProps> = React.memo(
           </div>
           <label className="flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-slate-400">
             Metric
-            <select
-              value={metric}
-              onChange={(event) =>
-                onMetricChange(event.target.value as TopMetric)
-              }
-              className="rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-2 text-xs normal-case tracking-normal text-slate-200 outline-none focus:border-teal-400"
-              aria-label="Top products metric"
-            >
-              <option value="unitsSold">Units sold</option>
-              <option value="revenue">Revenue</option>
-            </select>
+            <div className="relative inline-flex items-center">
+              <select
+                value={metric}
+                onChange={(event) =>
+                  onMetricChange(event.target.value as TopMetric)
+                }
+                className="appearance-none rounded-lg border border-slate-700 cursor-pointer bg-slate-950 pl-2.5 pr-8 py-2 text-xs normal-case tracking-normal text-slate-200 outline-none focus:border-teal-400"
+                aria-label="Top products metric"
+              >
+                <option value="unitsSold">Units sold</option>
+                <option value="revenue">Revenue</option>
+              </select>
+              <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2">
+                <Icon icon={ChevronDown} size="sm" color="muted" />
+              </div>
+            </div>
           </label>
         </div>
 
